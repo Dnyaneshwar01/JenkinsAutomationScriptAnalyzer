@@ -1,0 +1,25 @@
+[
+  {
+    "name": "Search Feature",
+    "tags": [],
+    "elements": [
+      {
+        "type": "scenario",
+        "name": "Search returns results",
+        "tags": [],
+        "steps": [
+          { "name": "I search for a product", "result": { "status": "passed" } },
+          { "name": "I see results", "result": { "status": "passed" } }
+        ]
+      },
+      {
+        "type": "scenario",
+        "name": "Search with no results shows empty state",
+        "tags": [],
+        "steps": [
+          { "name": "I search for gibberish", "result": { "status": "passed" } }
+        ]
+      }
+    ]
+  }
+]

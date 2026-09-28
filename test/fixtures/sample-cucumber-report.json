@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Login Feature",
+    "tags": [{ "name": "@login" }],
+    "elements": [
+      {
+        "type": "scenario",
+        "name": "Valid login shows dashboard",
+        "tags": [],
+        "steps": [
+          {
+            "name": "I open the login page",
+            "result": { "status": "failed", "error_message": "org.openqa.selenium.TimeoutException: Waiting for element to be visible\n\tat com.example.Page.waitFor(Page.java:42)" }
+          },
+          { "name": "I enter credentials", "result": { "status": "skipped" } }
+        ]
+      },
+      {
+        "type": "scenario",
+        "name": "Invalid login shows error toast",
+        "tags": [],
+        "steps": [
+          {
+            "name": "I click the submit button",
+            "result": { "status": "failed", "error_message": "org.openqa.selenium.TimeoutException: Waiting for element to be visible\n\tat com.example.Page.waitFor(Page.java:55)" }
+          }
+        ]
+      },
+      {
+        "type": "scenario",
+        "name": "Logout clears session",
+        "tags": [],
+        "steps": [
+          {
+            "name": "I click logout",
+            "result": { "status": "failed", "error_message": "java.lang.AssertionError: expected [true] but found [false]\n\tat com.example.LogoutTest.verify(LogoutTest.java:20)" }
+          }
+        ]
+      },
+      {
+        "type": "scenario",
+        "name": "Password reset sends email",
+        "tags": [],
+        "steps": [
+          { "name": "I have not implemented this step yet", "result": { "status": "undefined" } }
+        ]
+      },
+      {
+        "type": "scenario",
+        "name": "Session expires after timeout",
+        "tags": [],
+        "before": [
+          {
+            "result": { "status": "failed", "error_message": "java.lang.RuntimeException: Could not start WebDriver session id 3f2504e0-4f89-11d3-9a0c-0305e82c3301\n\tat com.example.Hooks.before(Hooks.java:15)" }
+          }
+        ],
+        "steps": [
+          { "name": "I wait 30 minutes", "result": { "status": "skipped" } }
+        ]
+      },
+      {
+        "type": "scenario",
+        "name": "Remember-me checkbox persists login",
+        "tags": [],
+        "steps": [
+          { "name": "I check remember me", "result": { "status": "passed" } },
+          { "name": "I close and reopen the browser", "result": { "status": "passed" } }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jenkins Cucumber Failure Analyzer</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Jenkins Cucumber Failure Analyzer</h1>
+    <p class="subtitle">Paste a Jenkins build URL to analyze and group its Cucumber test failures.</p>
+  </header>
+
+  <main>
+    <section class="input-bar">
+      <input
+        id="build-url-input"
+        type="text"
+        placeholder="http://jenkins-host/job/MyJob/123/"
+        autocomplete="off"
+      />
+      <button id="analyze-btn">Analyze</button>
+    </section>
+
+    <section id="status-area" class="status-area" hidden></section>
+
+    <section id="summary-bar" class="summary-bar" hidden></section>
+
+    <section id="insights-area" class="insights-area" hidden></section>
+
+    <section id="filter-bar" class="filter-bar" hidden>
+      <input id="filter-input" type="search" placeholder="Filter by feature, scenario, step, tag or error…" autocomplete="off" />
+      <label id="new-only-label" class="toggle" hidden><input id="new-only-toggle" type="checkbox" /> New failures only</label>
+      <button id="expand-all-btn" class="secondary" type="button">Expand all</button>
+      <span id="filter-count" class="filter-count"></span>
+    </section>
+
+    <section id="report-area" class="report-area"></section>
+
+    <button id="download-excel-btn" class="download-btn" hidden>Download Excel Report</button>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
