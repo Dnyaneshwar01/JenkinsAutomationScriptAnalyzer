@@ -12,7 +12,41 @@ const filterCount = document.getElementById('filter-count');
 const reportArea = document.getElementById('report-area');
 const downloadBtn = document.getElementById('download-excel-btn');
 
+const platformSelect = document.getElementById('platform-select');
+
 let lastReport = null;
+let platforms = [];
+
+// One option per Jenkins machine (e.g. SB = master branch, QA = QA branch); hidden when there is only one.
+async function loadPlatforms() {
+  try {
+    const res = await fetch('/api/platforms');
+    platforms = await res.json();
+  } catch {
+    platforms = [];
+  }
+  platformSelect.innerHTML = platforms
+    .map(
+      (p) =>
+        `<option value="${escapeHtml(p.id)}" ${p.configured ? '' : 'disabled'} title="${escapeHtml(p.problem || p.allowedHosts.join(', '))}">${escapeHtml(p.label)}${p.configured ? '' : ' (not set up)'}</option>`
+    )
+    .join('');
+  const firstUsable = platforms.find((p) => p.configured);
+  if (firstUsable) platformSelect.value = firstUsable.id;
+  platformSelect.hidden = platforms.length < 2;
+}
+
+// Selects the platform whose Jenkins host matches the pasted URL.
+function selectPlatformForUrl() {
+  let host;
+  try {
+    host = new URL(buildUrlInput.value.trim()).host.toLowerCase();
+  } catch {
+    return;
+  }
+  const match = platforms.find((p) => p.configured && p.allowedHosts.includes(host));
+  if (match) platformSelect.value = match.id;
+}
 
 function showStatus(message, type) {
   statusArea.hidden = false;
@@ -278,7 +312,7 @@ async function analyze() {
     const res = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ buildUrl }),
+      body: JSON.stringify({ buildUrl, platform: platformSelect.value || undefined }),
     });
 
     const data = await res.json();
@@ -338,6 +372,7 @@ async function downloadExcel() {
 }
 
 analyzeBtn.addEventListener('click', analyze);
+buildUrlInput.addEventListener('input', selectPlatformForUrl);
 buildUrlInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') analyze();
 });
@@ -345,3 +380,4 @@ filterInput.addEventListener('input', applyFilters);
 newOnlyToggle.addEventListener('change', applyFilters);
 expandAllBtn.addEventListener('click', toggleAllGroups);
 downloadBtn.addEventListener('click', downloadExcel);
+loadPlatforms();

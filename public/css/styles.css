@@ -49,6 +49,16 @@ main {
   margin-bottom: 16px;
 }
 
+#platform-select {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 #build-url-input {
   flex: 1;
   padding: 10px 12px;

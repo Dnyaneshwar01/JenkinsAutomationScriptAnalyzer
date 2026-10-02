@@ -12,21 +12,26 @@ const {
 } = require('../utils/errors');
 
 const client = axios.create({
-  auth: {
-    username: config.jenkinsUser,
-    password: config.jenkinsApiToken,
-  },
   timeout: config.jenkinsRequestTimeoutMs,
   validateStatus: () => true, // handle status codes ourselves
 });
 
-// Never send the configured credentials to a host outside JENKINS_ALLOWED_HOSTS.
+function allowedHostsText() {
+  return config.platforms
+    .filter((p) => p.configured)
+    .map((p) => `${p.label}: ${p.allowedHosts.join(', ') || 'any'}`)
+    .join('; ');
+}
+
+// Each request gets the credentials of the platform that owns its host, and credentials are
+// never sent to a host outside the platforms' JENKINS_<ID>_ALLOWED_HOSTS.
 client.interceptors.request.use((requestConfig) => {
   const { host } = new URL(requestConfig.url);
-  if (config.jenkinsAllowedHosts.length > 0 && !config.jenkinsAllowedHosts.includes(host.toLowerCase())) {
-    throw new ValidationError(`Jenkins host "${host}" is not allowed. Allowed hosts: ${config.jenkinsAllowedHosts.join(', ')} (JENKINS_ALLOWED_HOSTS in .env).`);
+  const platform = config.platformForHost(host);
+  if (!platform) {
+    throw new ValidationError(`Jenkins host "${host}" is not allowed. Allowed hosts: ${allowedHostsText()} (JENKINS_<platform>_ALLOWED_HOSTS in .env).`);
   }
-  return requestConfig;
+  return { ...requestConfig, auth: { username: platform.user, password: platform.apiToken } };
 });
 
 function mapTransportError(err, context) {

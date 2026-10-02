@@ -21,8 +21,13 @@ copy .env.example .env    # (Windows) or: cp .env.example .env
 ```
 
 Edit `.env`:
-- `JENKINS_USER` / `JENKINS_API_TOKEN` — your Jenkins username and API token (Jenkins → your user → **Configure** → **API Token** → **Add new Token**). Do not use your login password.
-- `JENKINS_ALLOWED_HOSTS` — comma-separated `host:port` list the credentials may be sent to (e.g. `192.168.101.96:8080`). Strongly recommended: without it, the token is sent to whatever host is in a pasted URL.
+- `JENKINS_PLATFORMS` — the Jenkins machines to read from, e.g. `SB,QA` (SB = master branch builds, QA = QA branch builds). The page shows a platform selector, and picks the platform automatically from the pasted URL's host.
+- For each platform `<ID>`:
+  - `JENKINS_<ID>_USER` / `JENKINS_<ID>_API_TOKEN` — your username and API token on that Jenkins (Jenkins → your user → **Configure** → **API Token** → **Add new Token**). Do not use your login password.
+  - `JENKINS_<ID>_ALLOWED_HOSTS` — comma-separated `host:port` list of that Jenkins (e.g. `192.168.101.96:8080`). Required when more than one platform is configured: the build URL's host decides whose credentials are sent, and a token is never sent to another platform's host.
+  - `JENKINS_<ID>_LABEL` — optional name shown in the selector, e.g. `SB`.
+  - A platform with missing settings is shown as "not set up" and cannot be selected.
+- Single Jenkins: leave `JENKINS_PLATFORMS` out and set `JENKINS_USER`, `JENKINS_API_TOKEN` and `JENKINS_ALLOWED_HOSTS` instead.
 - `CUCUMBER_JSON_ARTIFACT_PATH` — comma-separated candidate relative paths to the Cucumber JSON artifact within a build. The first one found on the build is used; if none match, the app falls back to any artifact ending in `cucumber*.json`, then to the Cucumber Reports plugin HTML pages.
 - `COMPARE_BUILD_PARAMS` — build parameters that must match for an earlier build to be used for the new / recurring comparison (default `Tags,Against,DataCenter,isRerun`).
 

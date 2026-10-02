@@ -33,6 +33,7 @@ function addSummarySheet(workbook, report) {
   const { jobName, buildNumber, buildUrl, summary, groups } = report;
 
   sheet.addRows([
+    ['Platform', (report.platform && report.platform.label) || ''],
     ['Job', jobName],
     ['Build', buildNumber],
     ['Build URL', buildUrl],

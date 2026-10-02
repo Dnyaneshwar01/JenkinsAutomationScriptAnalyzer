@@ -4,6 +4,7 @@ const config = require('./config/env');
 const analyzeRoute = require('./routes/analyze');
 const exportRoute = require('./routes/export');
 const screenshotRoute = require('./routes/screenshot');
+const platformsRoute = require('./routes/platforms');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -14,6 +15,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/api', analyzeRoute);
 app.use('/api', exportRoute);
 app.use('/api', screenshotRoute);
+app.use('/api', platformsRoute);
 
 app.use(errorHandler);
 
