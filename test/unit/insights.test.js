@@ -30,13 +30,13 @@ test('failing steps are counted ignoring the Gherkin keyword and quoted argument
   assert.equal(stepTemplate('And I log in as "bob" user'), 'I log in as "…" user');
   assert.equal(stepTemplate('Before Hook'), 'Before Hook');
   const steps = summarizeFailingSteps([
-    failure({ failedStep: 'And I log in as "bob" user' }),
-    failure({ failedStep: 'When I log in as "amy" user' }),
+    failure({ feature: 'MP - STD PQQ Flow', failedStep: 'And I log in as "bob" user' }),
+    failure({ feature: 'MP - Bids', failedStep: 'When I log in as "amy" user' }),
     failure({ failedStep: 'Then I see "x"' }),
   ]);
   assert.deepEqual(steps, [
-    { step: 'I log in as "…" user', count: 2, percent: 67 },
-    { step: 'I see "…"', count: 1, percent: 33 },
+    { step: 'I log in as "…" user', count: 2, percent: 67, features: ['MP - Bids', 'MP - STD PQQ Flow'] },
+    { step: 'I see "…"', count: 1, percent: 33, features: ['F'] },
   ]);
 });
 

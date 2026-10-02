@@ -184,7 +184,9 @@ function renderInsights(report) {
         .map(
           (s) => `<li>
             <div class="step-bar" style="width:${s.percent}%"></div>
-            <span class="step-text">${escapeHtml(s.step)}</span>
+            <span class="step-text">${escapeHtml(s.step)}${
+              s.features && s.features.length ? `<span class="step-features">${s.features.map(escapeHtml).join(' · ')}</span>` : ''
+            }</span>
             <span class="step-count">${s.count} · ${s.percent}%</span>
           </li>`
         )

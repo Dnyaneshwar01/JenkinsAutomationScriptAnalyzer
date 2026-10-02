@@ -11,6 +11,7 @@
     "run-fixture": "node test/run-fixture.js"
   },
   "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
     "exceljs": "^4.4.0",

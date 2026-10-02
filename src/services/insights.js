@@ -46,16 +46,21 @@ function stepTemplate(failedStep) {
     .replace(/<[^>]*>/g, '<…>');
 }
 
+// Each entry also lists the feature files the step failed in, so it can be traced back.
 function summarizeFailingSteps(failures, limit = 10) {
-  const counts = new Map();
+  const byStep = new Map();
   for (const failure of failures) {
     const step = stepTemplate(failure.failedStep);
-    counts.set(step, (counts.get(step) || 0) + 1);
+    if (!byStep.has(step)) byStep.set(step, { count: 0, features: new Set() });
+    const entry = byStep.get(step);
+    entry.count += 1;
+    entry.features.add(failure.feature);
   }
-  return Array.from(counts, ([step, count]) => ({
+  return Array.from(byStep, ([step, { count, features }]) => ({
     step,
     count,
     percent: failures.length ? Math.round((count / failures.length) * 100) : 0,
+    features: [...features].sort(),
   }))
     .sort((a, b) => b.count - a.count)
     .slice(0, limit);

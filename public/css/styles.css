@@ -195,6 +195,13 @@ button:disabled {
 
 .step-text { min-width: 0; overflow-wrap: anywhere; }
 
+.step-features {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .step-count {
   color: var(--muted);
   white-space: nowrap;
