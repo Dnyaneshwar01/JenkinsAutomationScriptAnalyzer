@@ -89,6 +89,52 @@ function parseElement(elementHtml, reportUrl) {
   };
 }
 
+// One attempt per <div class="element"> on a feature page (report-feature_*.html), passed ones included.
+// Re-runs of a scenario share its name and step text; outline examples differ in step text.
+function parseAttempt(elementHtml, featureName, reportUrl) {
+  const [scenarioBrief, ...inner] = parseBriefs(elementHtml);
+  const steps = inner.filter((b) => !GROUP_KEYWORDS.has(b.keyword));
+  const scenario = (scenarioBrief && scenarioBrief.name) || '(unnamed scenario)';
+  const key = [featureName, scenario, ...steps.map((b) => `${b.keyword} ${b.name}`)].join('\u0000');
+
+  if (scenarioBrief && scenarioBrief.status === 'passed') {
+    return { key, feature: featureName, scenario, failedStep: '', errorMessage: '', status: 'passed', tags: [], screenshots: [] };
+  }
+  return { key, ...parseElement(elementHtml, reportUrl), feature: featureName };
+}
+
+function extractAttemptsFromFeaturePage(featureHtml, featureName, reportUrl = '') {
+  const elements = (featureHtml || '').split(ELEMENT_START).slice(1);
+  if (elements.length === 0) {
+    throw new MalformedReportError(`The Cucumber HTML page for feature "${featureName}" has no scenarios.`);
+  }
+  return elements.map((elementHtml) => parseAttempt(elementHtml, featureName, reportUrl));
+}
+
+// Rows of the features table: { name, href, scenariosPassed, scenariosFailed, scenariosTotal }.
+// A re-run is merged into its feature's row, so totals there count every attempt.
+function parseFeatureTable(featuresHtml) {
+  const table = (featuresHtml || '').indexOf('id="tablesorter"');
+  if (table === -1) return [];
+  const body = featuresHtml.slice(table, featuresHtml.indexOf('<tfoot', table));
+
+  return body
+    .split('<td class="tagname">')
+    .slice(1)
+    .map((rowHtml) => {
+      const link = rowHtml.match(/<a href="([^"]+)">([\s\S]*?)<\/a>/);
+      const cells = Array.from(rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g), (m) => toText(m[1]));
+      // After the name cell: 6 step columns, then scenarios passed / failed / total
+      return {
+        name: link ? toText(link[2]) : '(unnamed feature)',
+        href: link ? decodeEntities(link[1]) : null,
+        scenariosPassed: parseInt(cells[6], 10) || 0,
+        scenariosFailed: parseInt(cells[7], 10) || 0,
+        scenariosTotal: parseInt(cells[8], 10) || 0,
+      };
+    });
+}
+
 // reportUrl: the cucumber-html-reports/ folder URL, used to make screenshot links absolute.
 function extractFailuresFromHtml(failuresHtml, reportUrl = '') {
   if (!failuresHtml || !failuresHtml.includes('Failures Overview')) {
@@ -124,4 +170,10 @@ function getSummaryFromHtml(featuresHtml, failures) {
   };
 }
 
-module.exports = { extractFailuresFromHtml, getSummaryFromHtml, decodeEntities };
+module.exports = {
+  extractFailuresFromHtml,
+  extractAttemptsFromFeaturePage,
+  parseFeatureTable,
+  getSummaryFromHtml,
+  decodeEntities,
+};

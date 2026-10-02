@@ -113,13 +113,21 @@ async function fetchHtmlPage(url, context) {
   return response.data;
 }
 
-// Pages published by the Jenkins "Cucumber Reports" plugin under <build>/cucumber-html-reports/
+// Pages published by the Jenkins "Cucumber Reports" plugin under <build>/cucumber-html-reports/.
+// Feature and failure pages are fetched on demand with fetchReportPage.
 async function fetchHtmlReport(buildUrl) {
   const reportUrl = `${buildUrl}cucumber-html-reports/`;
-  const failuresHtml = await fetchHtmlPage(`${reportUrl}overview-failures.html`, 'fetching the Cucumber HTML failures report');
-  if (failuresHtml === null) return null;
   const featuresHtml = await fetchHtmlPage(`${reportUrl}overview-features.html`, 'fetching the Cucumber HTML features report');
-  return { reportUrl, failuresHtml, featuresHtml: featuresHtml || '' };
+  if (featuresHtml === null) return null;
+  return { reportUrl, featuresHtml };
+}
+
+// A page under the report folder, e.g. 'report-feature_5_2153168176.html'. Missing pages are an error.
+async function fetchReportPage(reportUrl, page) {
+  const context = `fetching the Cucumber HTML page "${page}"`;
+  const html = await fetchHtmlPage(`${reportUrl}${page}`, context);
+  if (html === null) throw new JenkinsNotFoundError(`Jenkins returned 404 while ${context}.`);
+  return html;
 }
 
 async function fetchScreenshot(screenshotUrl) {
@@ -204,6 +212,7 @@ module.exports = {
   findArtifact,
   fetchCucumberJson,
   fetchHtmlReport,
+  fetchReportPage,
   fetchScreenshot,
   findPreviousComparableBuild,
   analyzeBuild,

@@ -9,6 +9,7 @@ A small internal utility for a daily workflow: paste a Jenkins build URL, click 
 - **New / recurring / fixed**: compared with the latest earlier finished build of the same job that ran with the same `COMPARE_BUILD_PARAMS` (the job runs a different suite per build, so the immediately previous build is usually not comparable).
 - **Screenshots** attached to failed scenarios, as thumbnails in the page and links in Excel.
 - **Filter** by feature, scenario, step, tag or error text, and a "new failures only" toggle.
+- **Re-runs within a build**: when failed features are re-run in the same build (e.g. `SerialRerun`), each scenario is counted once by its last run. Scenarios that passed on re-run are left out of the failure list. The summary counts **feature files** (a feature fails a run if any of its scenarios fails it): failed in 1st run, fixed by re-run, failed after re-run and the pass rate before / after re-run; the Excel summary also keeps the scenario counts as detail, and each failure shows its run count and history (e.g. `Failed → Failed`). Runs of the same scenario are matched by feature, scenario name and step text, so Scenario Outline examples stay separate. With the HTML report, the pages of features that had a failure are fetched to see every run.
 
 Results are read from an archived Cucumber JSON artifact when the build has one, otherwise from the Jenkins **Cucumber Reports** plugin pages (`<build>/cucumber-html-reports/`).
 

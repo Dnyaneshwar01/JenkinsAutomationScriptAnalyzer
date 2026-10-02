@@ -47,18 +47,55 @@ function renderScreenshots(screenshots) {
   return `<div class="screenshots">${thumbs}</div>`;
 }
 
-function renderSummary(report) {
-  const { summary, comparison } = report;
-  summaryBar.hidden = false;
-  const passRate = summary.total ? `${Math.round((summary.passed / summary.total) * 100)}%` : '–';
+const percent = (part, whole) => (whole ? `${Math.round((part / whole) * 100)}%` : '–');
+
+function hasReruns(report) {
+  return Boolean(report.summary.reruns && report.summary.reruns.rerunScenarios > 0);
+}
+
+const STATUS_LABELS = { passed: 'Passed', failed: 'Failed', undefined: 'Undefined', pending: 'Pending' };
+
+function renderRunHistory(f) {
+  if (!f.runCount || f.runCount < 2) return '';
+  const history = (f.attempts || []).map((a) => STATUS_LABELS[a.status] || a.status).join(' → ');
+  return `<div class="run-history"><span class="run-count">Ran ${f.runCount}×</span>${escapeHtml(history)}</div>`;
+}
+
+// Counts are per feature file: a feature fails a run if any of its scenarios fails it.
+function featureStats(report) {
+  const features = report.summary.features;
   const stats = [
-    ['Total', summary.total],
+    ['Feature files', features.total],
+    ['Passed', features.passed, 'passed'],
+    [hasReruns(report) ? 'Failed after re-run' : 'Failed', features.failed, 'failed'],
+    [hasReruns(report) ? 'Pass rate after re-run' : 'Pass rate', percent(features.passed, features.total)],
+  ];
+  if (hasReruns(report)) {
+    stats.push(
+      ['Failed in 1st run', features.firstRunFailed, 'failed rerun'],
+      ['Fixed by re-run', features.passedOnRerun, 'passed rerun'],
+      ['1st-run pass rate', percent(features.total - features.firstRunFailed, features.total), 'rerun']
+    );
+  }
+  return stats;
+}
+
+function scenarioStats({ summary }) {
+  return [
+    ['Total scenarios', summary.total],
     ['Passed', summary.passed, 'passed'],
     ['Failed', summary.failed, 'failed'],
     ['Undefined', summary.undefined],
     ['Pending', summary.pending],
-    ['Pass rate', passRate],
+    ['Pass rate', percent(summary.passed, summary.total)],
   ];
+}
+
+function renderSummary(report) {
+  const { comparison } = report;
+  summaryBar.hidden = false;
+  // Reports from the fallback failures-only path have no per-feature counts.
+  const stats = report.summary.features ? featureStats(report) : scenarioStats(report);
   if (hasComparison(report)) {
     stats.push(
       [`New vs #${comparison.previousBuildNumber}`, comparison.newCount, 'failed'],
@@ -83,6 +120,14 @@ function renderInsights(report) {
     notes.push(`New / recurring / fixed are relative to build #${comparison.previousBuildNumber}${params ? `, the latest earlier build with the same ${params}` : ''}.`);
   } else {
     notes.push('No earlier comparable build found, so failures are not marked as new or recurring.');
+  }
+  if (hasReruns(report)) {
+    const { reruns, features } = report.summary;
+    notes.push(
+      `${features.rerun} feature file(s) were re-run in this build; each is counted once by its last run. ` +
+        `${features.passedOnRerun} passed on re-run, ${features.failed} still failing. ` +
+        `Below, scenarios that passed on re-run are left out (${reruns.passedOnRerun} of ${reruns.firstRunFailed} 1st-run scenario failures).`
+    );
   }
 
   if (report.allPassed || (steps.length === 0 && notes.length === 0)) {
@@ -123,7 +168,8 @@ function renderReport(report) {
   reportArea.innerHTML = '';
 
   if (report.allPassed) {
-    reportArea.innerHTML = `<div class="all-passed">All scenarios passed for ${escapeHtml(report.jobName)} #${escapeHtml(report.buildNumber)}.</div>`;
+    const afterRerun = hasReruns(report) ? ` after re-run (${report.summary.features.passedOnRerun} feature file(s) passed on re-run)` : '';
+    reportArea.innerHTML = `<div class="all-passed">All scenarios passed for ${escapeHtml(report.jobName)} #${escapeHtml(report.buildNumber)}${escapeHtml(afterRerun)}.</div>`;
     downloadBtn.hidden = true;
     filterBar.hidden = true;
     return;
@@ -152,6 +198,7 @@ function renderReport(report) {
             <div class="failure-details">
               <div class="feature-scenario">${showTrend && f.isNew ? '<span class="badge-new">NEW</span>' : ''}<strong>${escapeHtml(f.feature)}</strong> &rsaquo; ${escapeHtml(f.scenario)}</div>
               <div>Failed step: ${escapeHtml(f.failedStep)}</div>
+              ${renderRunHistory(f)}
               ${f.tags && f.tags.length ? `<div class="tags">${f.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
               <pre>${escapeHtml(f.errorMessage || '(no error message)')}</pre>
             </div>

@@ -21,6 +21,13 @@ function trendLabel(report, failure) {
   return failure.isNew ? 'New' : 'Recurring';
 }
 
+const STATUS_LABELS = { passed: 'Passed', failed: 'Failed', undefined: 'Undefined', pending: 'Pending' };
+
+// e.g. "Failed → Failed"; empty for reports without per-run data.
+function runHistory(failure) {
+  return (failure.attempts || []).map((a) => STATUS_LABELS[a.status] || a.status).join(' → ');
+}
+
 function addSummarySheet(workbook, report) {
   const sheet = workbook.addWorksheet('Summary');
   const { jobName, buildNumber, buildUrl, summary, groups } = report;
@@ -31,13 +38,47 @@ function addSummarySheet(workbook, report) {
     ['Build URL', buildUrl],
     ['Generated', new Date().toISOString()],
     [],
-    ['Total Scenarios', summary.total],
+  ]);
+
+  // Feature files are the headline numbers: failed features are what gets re-run.
+  const { features, reruns } = summary;
+  const rate = (passed, total) => (total ? `${Math.round((passed / total) * 100)}%` : '');
+  const rerunInBuild = Boolean(reruns && reruns.rerunScenarios > 0);
+  if (features) {
+    sheet.addRow(['Feature files', rerunInBuild ? 'each counted once, by its last run' : '']).font = { bold: true };
+    sheet.addRows([
+      ['Total feature files', features.total],
+      ['Passed', features.passed],
+      [rerunInBuild ? 'Failed after re-run' : 'Failed', features.failed],
+      [rerunInBuild ? 'Pass rate after re-run' : 'Pass rate', rate(features.passed, features.total)],
+    ]);
+    if (rerunInBuild) {
+      sheet.addRows([
+        ['Feature files re-run', features.rerun],
+        ['Failed in 1st run', features.firstRunFailed],
+        ['Fixed by re-run', features.passedOnRerun],
+        ['1st-run pass rate', rate(features.total - features.firstRunFailed, features.total)],
+      ]);
+    }
+    sheet.addRow([]);
+  }
+
+  sheet.addRow(['Scenarios', features ? 'detail' : '']).font = { bold: true };
+  sheet.addRows([
+    ['Total scenarios', summary.total],
     ['Passed', summary.passed],
     ['Failed', summary.failed],
     ['Undefined', summary.undefined],
     ['Pending', summary.pending],
-    [],
   ]);
+  if (rerunInBuild) {
+    sheet.addRows([
+      ['Total runs (incl. re-runs)', reruns.totalAttempts],
+      ['Failed in 1st run', reruns.firstRunFailed],
+      ['Fixed by re-run', reruns.passedOnRerun],
+    ]);
+  }
+  sheet.addRow([]);
 
   const { comparison } = report;
   if (hasComparison(report)) {
@@ -103,6 +144,8 @@ function addFailuresSheet(workbook, report) {
     { header: 'Feature', key: 'feature', width: 30 },
     { header: 'Scenario', key: 'scenario', width: 35 },
     { header: 'Failed Step', key: 'failedStep', width: 35 },
+    { header: 'Runs', key: 'runs', width: 8 },
+    { header: 'Run History', key: 'runHistory', width: 24 },
     { header: 'Error Message', key: 'errorMessage', width: 60 },
     { header: 'Tags', key: 'tags', width: 25 },
     { header: 'Screenshot', key: 'screenshot', width: 16 },
@@ -124,6 +167,8 @@ function addFailuresSheet(workbook, report) {
         feature: failure.feature,
         scenario: failure.scenario,
         failedStep: failure.failedStep,
+        runs: failure.runCount || 1,
+        runHistory: runHistory(failure),
         errorMessage: failure.errorMessage || '(no error message)',
         tags: (failure.tags || []).join(', '),
         // Links straight to Jenkins, so it opens for anyone logged in there.

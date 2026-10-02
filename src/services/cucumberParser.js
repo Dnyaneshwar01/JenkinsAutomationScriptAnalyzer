@@ -80,6 +80,34 @@ function extractFailures(cucumberJson) {
   return failures;
 }
 
+// Every scenario run in report order, passed ones included, for re-run consolidation.
+// Re-runs of a scenario share its feature, name and step text; outline examples differ in step text.
+function extractScenarioAttempts(cucumberJson) {
+  const attempts = [];
+
+  for (const feature of cucumberJson || []) {
+    const featureName = feature.name || '(unnamed feature)';
+    for (const element of feature.elements || []) {
+      if (!SCENARIO_TYPES.has(element.type)) continue;
+
+      const scenario = element.name || '(unnamed scenario)';
+      const steps = (element.steps || []).map((s) => `${s.keyword || ''}${s.name || ''}`).join('\n');
+      const failure = findScenarioFailure(element);
+      attempts.push({
+        key: [feature.uri || featureName, scenario, steps].join('\u0000'),
+        feature: featureName,
+        scenario,
+        failedStep: failure ? failure.failedStep : '',
+        errorMessage: failure ? failure.errorMessage : '',
+        status: failure ? failure.status : 'passed',
+        tags: extractTags(element, feature),
+      });
+    }
+  }
+
+  return attempts;
+}
+
 function getSummaryCounts(cucumberJson) {
   const counts = { total: 0, passed: 0, failed: 0, undefined: 0, pending: 0 };
 
@@ -104,4 +132,4 @@ function getSummaryCounts(cucumberJson) {
   return counts;
 }
 
-module.exports = { extractFailures, getSummaryCounts };
+module.exports = { extractFailures, extractScenarioAttempts, getSummaryCounts };

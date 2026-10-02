@@ -110,6 +110,23 @@ button:disabled {
 
 .summary-stat.failed strong { color: var(--danger); }
 .summary-stat.passed strong { color: var(--success); }
+.summary-stat.rerun { border-style: dashed; }
+
+.run-history {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.run-history .run-count {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--warning);
+  background: rgba(251, 191, 36, 0.15);
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-right: 6px;
+}
 
 .insights-area {
   background: var(--panel);
