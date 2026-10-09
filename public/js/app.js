@@ -14,6 +14,8 @@ const downloadBtn = document.getElementById('download-excel-btn');
 
 const platformSelect = document.getElementById('platform-select');
 
+const TOP_FAILING_STEPS = 10;
+
 let lastReport = null;
 let platforms = [];
 
@@ -143,7 +145,8 @@ function renderSummary(report) {
 }
 
 function renderInsights(report) {
-  const steps = report.failingSteps || [];
+  // The report carries every failing step (for the Excel export); the page shows the most common.
+  const steps = (report.failingSteps || []).slice(0, TOP_FAILING_STEPS);
   const { comparison } = report;
   const notes = [];
   if (comparison && comparison.error) {

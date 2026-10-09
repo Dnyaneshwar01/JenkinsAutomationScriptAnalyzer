@@ -40,6 +40,11 @@ test('failing steps are counted ignoring the Gherkin keyword and quoted argument
   ]);
 });
 
+test('lists every distinct failing step, not just the top 10', () => {
+  const failures = Array.from({ length: 15 }, (_, i) => failure({ failedStep: `When I do step ${i}` }));
+  assert.equal(summarizeFailingSteps(failures).length, 15);
+});
+
 test('compares with the previous build by feature + scenario', () => {
   const current = [failure({ scenario: 'A' }), failure({ scenario: 'B' })];
   const previous = [failure({ scenario: 'B' }), failure({ scenario: 'C' })];

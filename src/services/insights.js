@@ -47,7 +47,8 @@ function stepTemplate(failedStep) {
 }
 
 // Each entry also lists the feature files the step failed in, so it can be traced back.
-function summarizeFailingSteps(failures, limit = 10) {
+// Unlimited by default so the Excel export lists every failing step; the UI shows the top few.
+function summarizeFailingSteps(failures, limit = Infinity) {
   const byStep = new Map();
   for (const failure of failures) {
     const step = stepTemplate(failure.failedStep);
